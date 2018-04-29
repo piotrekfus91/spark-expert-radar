@@ -1,10 +1,10 @@
 package com.github.ser
 
 import com.github.ser.domain.User
-import com.github.ser.test.SparkContextAware
+import org.apache.spark.SparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class ReaderTest extends FlatSpec with SparkContextAware with Matchers {
+class ReaderTest(sc: SparkContext) extends FlatSpec with Matchers {
   val sut = new Reader(sc)
 
   it should "read file to RDD" in {
