@@ -15,7 +15,7 @@ class Geocoder(sc: SparkContext, host: String) extends LazyLogging with Serializ
     users.map { user =>
       if (user.location.isDefined) {
         val httpClient = HttpClients.createDefault()
-        val get = new HttpGet(s"$host/search?q=${user.location.get}&format=json")
+        val get = new HttpGet(s"$host/search?q=${user.location.get.replace(" ", "+")}&format=json")
         val response = httpClient.execute(get)
         val entity = response.getEntity
         val string = Source.fromInputStream(entity.getContent).mkString
