@@ -1,0 +1,12 @@
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "userId": { "type": "long" },
+        "displayName": { "type": "text" },
+        "location": { "type": "text" },
+        "geolocation": { "type": "geo_point" }
+      }
+    }
+  }
+}

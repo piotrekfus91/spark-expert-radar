@@ -31,6 +31,18 @@ val jackson = new {
   )
 }
 
+val elasticsearch = new {
+  val deps = Seq(
+    "org.elasticsearch" %% "elasticsearch-spark-20" % "6.2.4"
+  )
+}
+
+val elastic4s = new {
+  val version = "6.2.6"
+  val modules = Seq("elastic4s-core", "elastic4s-http")
+  val deps = modules.map { "com.sksamuel.elastic4s" %% _ % version }
+}
+
 val test = new {
   val deps = Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
@@ -40,7 +52,7 @@ val test = new {
   )
 }
 
-val dependencies = Seq(spark, logging, util, test)
+val dependencies = Seq(spark, logging, util, elasticsearch, elastic4s, test)
 
 libraryDependencies ++= dependencies.flatMap(_.deps)
 

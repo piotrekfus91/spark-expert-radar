@@ -7,6 +7,7 @@ object Spark {
     .setAppName(this.getClass.getSimpleName)
     .setMaster("local[*]")
     .set("geocoding.host", "http://localhost:3737")
+    .set("es.index", Index.indexName)
 
   val sc = new SparkContext(sparkConf)
 }
