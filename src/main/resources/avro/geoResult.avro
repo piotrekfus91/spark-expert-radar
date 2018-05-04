@@ -1,0 +1,48 @@
+{
+  "type": "record",
+  "name": "GeoResult",
+  "namespace": "com.github.ser.domain",
+  "fields": [
+    {
+      "name": "displayName",
+      "type": "string"
+    },
+    {
+      "name": "latitude",
+      "type": "double"
+    },
+    {
+      "name": "longitude",
+      "type": "double"
+    },
+    {
+      "name": "importance",
+      "type": "double"
+    },
+    {
+      "name": "boundingBox",
+      "type": {
+        "type": "record",
+        "name": "BoundingBox",
+        "fields": [
+          {
+            "name": "westLatitude",
+            "type": "double"
+          },
+          {
+            "name": "eastLatitude",
+            "type": "double"
+          },
+          {
+            "name": "northLongitude",
+            "type": "double"
+          },
+          {
+            "name": "southLongitude",
+            "type": "double"
+          }
+        ]
+      }
+    }
+  ]
+}

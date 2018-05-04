@@ -43,6 +43,18 @@ val elastic4s = new {
   val deps = modules.map { "com.sksamuel.elastic4s" %% _ % version }
 }
 
+val redis = new {
+  val deps = Seq(
+    "net.debasishg" %% "redisclient" % "3.6"
+  )
+}
+
+val avro = new {
+  val deps = Seq(
+    "com.sksamuel.avro4s" %% "avro4s-core" % "1.8.3"
+  )
+}
+
 val test = new {
   val deps = Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
@@ -52,7 +64,7 @@ val test = new {
   )
 }
 
-val dependencies = Seq(spark, logging, util, elasticsearch, elastic4s, test)
+val dependencies = Seq(spark, logging, util, elasticsearch, elastic4s, redis, avro, test)
 
 libraryDependencies ++= dependencies.flatMap(_.deps)
 
