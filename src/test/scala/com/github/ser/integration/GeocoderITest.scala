@@ -1,14 +1,16 @@
 package com.github.ser.integration
 
-import com.github.ser.{Cleaner, Geocoder, Reader}
+import com.github.ser._
+import com.github.ser.test.Randoms
+import com.redis.RedisClient
 import org.apache.spark.SparkContext
 import org.scalatest.{FunSuite, Matchers}
 
-class GeocoderITest(sc: SparkContext) extends FunSuite with Matchers {
+class GeocoderITest(sc: SparkContext, redis: RedisClient) extends FunSuite with Matchers with Randoms {
   test("should read data from geocoder") {
     val reader = new Reader(sc)
     val cleaner = new Cleaner(sc)
-    val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org")
+    val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new RedisGeoResultCache(redis, s"geocoderITest:${randomString(5)}"))
 
     val users = Seq(
       cleaner.cleanUsers _,

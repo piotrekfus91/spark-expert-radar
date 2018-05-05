@@ -1,6 +1,7 @@
 package com.github.ser
 
 import com.github.ser.setup.ElasticsearchSetup
+import com.redis.RedisClient
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.HttpClient
 import org.apache.spark.{SparkConf, SparkContext}
@@ -24,9 +25,11 @@ object Main extends App {
 
   val sc = new SparkContext(sparkConf)
 
+  val geoResultCache = new RedisGeoResultCache(new RedisClient("localhost", 6379), "geoResult")
+
   val reader = new Reader(sc)
   val cleaner = new Cleaner(sc)
-  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org")
+  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", geoResultCache)
   val esSaver = new EsSaver(sc)
 
   val users = Seq(

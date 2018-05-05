@@ -4,9 +4,10 @@ import com.github.ser.domain.{BoundingBox, GeoResult, User}
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.apache.spark.SparkContext
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 
-class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec with Matchers {
+class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec with Matchers with MockFactory {
   val location1 =
     """
       |{
@@ -62,9 +63,9 @@ class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec 
     GeoResult("Warsaw, 12, Osmańska, Krasnowola, Ursynów, Warsaw, Warszawa, Masovian Voivodeship, 02-823, Poland", 52.1539925, 20.9956212354654, 0.22025, BoundingBox(52.1536005, 52.1543307, 20.9952683, 20.9959734))
   ))
 
-  val sut = new Geocoder(sc, "http://localhost:3737")
+  "Geocoder without cache" when {
+    val sut = new Geocoder(sc, "http://localhost:3737", new MapBasedGeoResultCache)
 
-  "Geocoder" when {
     "read correct geocoding data" should {
       "if data are sorted" in {
         wireMock.stubFor(
@@ -117,6 +118,39 @@ class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec 
 
         val usersWithGeoResults = sut.fetchGeoResults(sc.parallelize(Seq(User(1, "homeless user", None)))).collect()
         usersWithGeoResults should contain(User(1,"homeless user", None, List()))
+      }
+    }
+  }
+
+  "Geocoder with mock cache" when {
+    val cache = new MapBasedGeoResultCache
+    val sut = new Geocoder(sc, "http://localhost:3737", cache)
+
+    "use cache correctly" should {
+      "use geocoder if key not exists in cache" in {
+        wireMock.stubFor(
+          get(urlPathMatching("/search"))
+            .willReturn(aResponse().withBody(geocoderSortedResponse))
+        )
+        val usersRdd = sc.parallelize(Seq(User(1, "some user", Some("single"))))
+
+        val usersWithGeoResults = sut.fetchGeoResults(usersRdd).collect()
+        usersWithGeoResults(0).geoResults should not be empty
+
+        wireMock.verify(1, getRequestedFor(urlPathMatching("/search")).withQueryParam("q", equalTo("single")))
+      }
+
+      "not use geocoder if key exists in cache" in {
+        wireMock.stubFor(
+          get(urlPathMatching("/search"))
+            .willReturn(aResponse().withBody(geocoderSortedResponse))
+        )
+        cache.save("otherSingle", List.empty)
+        val usersRdd = sc.parallelize(Seq(User(1, "some user", Some("otherSingle"))))
+
+        sut.fetchGeoResults(usersRdd).collect()
+
+        wireMock.verify(0, getRequestedFor(urlPathMatching("/search")).withQueryParam("q", equalTo("otherSingle")))
       }
     }
   }

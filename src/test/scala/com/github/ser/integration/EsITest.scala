@@ -2,7 +2,7 @@ package com.github.ser.integration
 
 import com.github.ser.setup.ElasticsearchSetup
 import com.github.ser.test.Index
-import com.github.ser.{Cleaner, EsSaver, Geocoder, Reader}
+import com.github.ser._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import org.apache.spark.SparkContext
@@ -15,7 +15,7 @@ class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matche
 
     val reader = new Reader(sc)
     val cleaner = new Cleaner(sc)
-    val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org")
+    val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new MapBasedGeoResultCache)
     val esSaver = new EsSaver(sc)
 
     val users = Seq(

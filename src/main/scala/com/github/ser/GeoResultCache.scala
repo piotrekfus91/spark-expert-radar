@@ -8,12 +8,20 @@ import com.redis.serialization.Parse.Implicits.parseByteArray
 import com.sksamuel.avro4s.{AvroInputStream, AvroOutputStream}
 import org.apache.commons.lang3.StringUtils
 
+import scala.collection.mutable
+
 trait GeoResultCache {
-  def save(location: String, georesults: List[GeoResult]): Unit
+  def save(location: String, geoResults: List[GeoResult]): Unit
   def get(location: String): Option[List[GeoResult]]
 }
 
-class RedisGeoResultCache(val redis: RedisClient, val prefix: String) extends GeoResultCache {
+class MapBasedGeoResultCache extends GeoResultCache with Serializable {
+  val cache = mutable.Map[String, List[GeoResult]]()
+  override def save(location: String, geoResults: List[GeoResult]): Unit = cache.put(location, geoResults)
+  override def get(location: String): Option[List[GeoResult]] = cache.get(location)
+}
+
+class RedisGeoResultCache(val redis: RedisClient, val prefix: String) extends GeoResultCache with Serializable {
 
   override def save(location: String, geoResults: List[GeoResult]): Unit = {
     val key = buildKey(location)
