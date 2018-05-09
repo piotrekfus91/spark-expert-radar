@@ -25,7 +25,8 @@ object Main extends App {
 
   val sc = new SparkContext(sparkConf)
 
-  val geoResultCache = new RedisGeoResultCache(new RedisClient("localhost", 6379), "geoResult")
+  val redis = new RedisClient("localhost", 6379) with Serializable
+  val geoResultCache = new RedisGeoResultCache(redis, "geoResult")
 
   val reader = new Reader(sc)
   val cleaner = new Cleaner(sc)
