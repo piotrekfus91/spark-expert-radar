@@ -14,7 +14,7 @@ class EsSaver(sc: SparkContext) {
         "location" -> user.location.getOrElse(""),
         "geolocation" -> user.geoResults.find(_ => true).map(geoResult => Seq(geoResult.latitude, geoResult.longitude)).map(_.mkString(",")).getOrElse("")
       )
-    }.saveToEs(s"${sc.getConf.get("es.index")}/doc")
+    }.saveToEs(s"${sc.getConf.get("es.index")}/doc", Map("es.mapping.id" -> "userId"))
     users
   }
 }

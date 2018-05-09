@@ -15,7 +15,6 @@ object Main extends App {
   val indexName = "users"
 
   val esSetup = new ElasticsearchSetup(esClient)
-  esSetup.removeIndex(indexName) // TODO
   esSetup.setupIndex(indexName, Source.fromFile(Main.getClass.getClassLoader.getResource("elasticsearch/index.json").getPath).mkString)
 
   val sparkConf = new SparkConf()
