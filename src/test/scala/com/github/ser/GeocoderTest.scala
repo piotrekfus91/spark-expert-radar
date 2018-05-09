@@ -58,7 +58,7 @@ class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec 
   val users = List(User(123, "some user", Some("Warsaw")))
   val usersRdd = sc.parallelize(users)
 
-  val expectedUser = User(123, "some user", Some("Warsaw"), List(
+  val expectedUser = User(123, "some user", Some("Warsaw")).copy(geoResults = List(
     GeoResult("Warsaw, Warszawa, Masovian Voivodeship, Poland", 52.2319237, 21.0067265, 0.41072546160754, BoundingBox(52.0978507, 52.3681531, 20.8516882, 21.2711512)),
     GeoResult("Warsaw, 12, Osmańska, Krasnowola, Ursynów, Warsaw, Warszawa, Masovian Voivodeship, 02-823, Poland", 52.1539925, 20.9956212354654, 0.22025, BoundingBox(52.1536005, 52.1543307, 20.9952683, 20.9959734))
   ))
@@ -107,7 +107,7 @@ class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec 
         )
 
         val usersWithGeoResults = sut.fetchGeoResults(usersRdd).collect()
-        usersWithGeoResults should contain(User(123,"some user",Some("Warsaw"), List()))
+        usersWithGeoResults should contain(User(123,"some user",Some("Warsaw")))
       }
 
       "if user has no location" in {
@@ -117,7 +117,7 @@ class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec 
         )
 
         val usersWithGeoResults = sut.fetchGeoResults(sc.parallelize(Seq(User(1, "homeless user", None)))).collect()
-        usersWithGeoResults should contain(User(1,"homeless user", None, List()))
+        usersWithGeoResults should contain(User(1,"homeless user", None))
       }
     }
   }
