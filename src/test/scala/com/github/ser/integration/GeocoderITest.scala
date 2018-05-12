@@ -17,7 +17,6 @@ class GeocoderITest(sc: SparkContext, redis: RedisClient) extends FunSuite with 
       geocoder.fetchGeoResults _
     ).reduce(_ andThen _)(reader.loadUsers(this.getClass.getClassLoader.getResource("Users_2.xml").getPath)).collect().toList
 
-    println(users)
     users.foreach(_.geoResults should not be empty)
   }
 }

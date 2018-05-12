@@ -4,12 +4,14 @@ import com.github.ser.setup.ElasticsearchSetup
 import com.redis.RedisClient
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.HttpClient
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.io.Source
 
-object Main extends App {
+object Main extends App with LazyLogging {
   val usersPath = args(0)
+  logger.info(s"users file: $usersPath")
 
   val esClient = HttpClient(ElasticsearchClientUri("localhost", 9200))
   val indexName = "users"
@@ -38,7 +40,7 @@ object Main extends App {
     esSaver.saveUsersInEs _
   ).reduce(_ andThen _)(reader.loadUsers(usersPath))
 
-  println(s"Indexing finished, indexed: ${users.count()}")
+  logger.info(s"User indexing finished, indexed: ${users.count()}")
 
   sc.stop()
 }

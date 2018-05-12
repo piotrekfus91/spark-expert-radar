@@ -6,6 +6,7 @@ import com.github.ser.domain.GeoResult
 import com.redis.RedisClient
 import com.redis.serialization.Parse.Implicits.parseByteArray
 import com.sksamuel.avro4s.{AvroInputStream, AvroOutputStream}
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable
@@ -21,9 +22,10 @@ class MapBasedGeoResultCache extends GeoResultCache with Serializable {
   override def get(location: String): Option[List[GeoResult]] = cache.get(location)
 }
 
-class RedisGeoResultCache(val redis: RedisClient, val prefix: String) extends GeoResultCache with Serializable {
+class RedisGeoResultCache(val redis: RedisClient, val prefix: String) extends GeoResultCache with LazyLogging with Serializable {
 
   override def save(location: String, geoResults: List[GeoResult]): Unit = {
+    logger.trace(s"saving location $location as $geoResults")
     val key = buildKey(location)
     val baos = new ByteArrayOutputStream()
     val out = AvroOutputStream.json[GeoResult](baos)
@@ -35,6 +37,7 @@ class RedisGeoResultCache(val redis: RedisClient, val prefix: String) extends Ge
   override def get(location: String): Option[List[GeoResult]] = {
     val key = buildKey(location)
     val maybeBytes = redis.get[Array[Byte]](key)
+    logger.trace(s"got geolocation from cache for $location: $maybeBytes")
     maybeBytes.map { bytes =>
       val bais = new ByteArrayInputStream(bytes)
       val in = AvroInputStream.json[GeoResult](bais)

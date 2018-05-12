@@ -1,12 +1,14 @@
 package com.github.ser
 
 import com.github.ser.domain.User
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.elasticsearch.spark._
 
-class EsSaver(sc: SparkContext) {
+class EsSaver(sc: SparkContext) extends LazyLogging {
   def saveUsersInEs(users: RDD[User]): RDD[User] = {
+    logger.info("saving users to ES")
     users.map { user =>
       Map(
         "userId" -> user.id,

@@ -12,7 +12,9 @@ import scala.util.parsing.json.JSON
 
 class Geocoder(sc: SparkContext, host: String, geoResultCache: GeoResultCache) extends LazyLogging with Serializable {
   def fetchGeoResults(users: RDD[User]): RDD[User] = {
+    logger.info("fetching geo results")
     users.map { user =>
+      logger.debug(s"fetching geolocation for $user")
       user.location.map { location =>
         val geoResults = user.location.flatMap(geoResultCache.get).getOrElse {
           def fetchJson: Option[Any] = {
@@ -21,12 +23,15 @@ class Geocoder(sc: SparkContext, host: String, geoResultCache: GeoResultCache) e
             val response = httpClient.execute(get)
             val string = Source.fromInputStream(response.getEntity.getContent).mkString
             val json = JSON.parseFull(string)
+            logger.trace(s"geocoder response: $json")
             json
           }
 
           val json = fetchJson
           val geoResults = json match {
-            case None => List.empty
+            case None =>
+              logger.warn(s"cannot fetch georesults for $user")
+              List.empty
             case Some(parsed) =>
               parsed.asInstanceOf[List[Map[String, Any]]].map { entry =>
                 val boundingBox = entry("boundingbox").asInstanceOf[List[String]].map(_.toDouble)
@@ -44,7 +49,8 @@ class Geocoder(sc: SparkContext, host: String, geoResultCache: GeoResultCache) e
                 )
               }
           }
-          geoResultCache.save(user.location.get, geoResults)
+          geoResultCache.save(location, geoResults)
+          logger.debug(s"georesults $geoResults")
           geoResults
         }
         user.copy(geoResults = geoResults.sortBy(_.importance).reverse)

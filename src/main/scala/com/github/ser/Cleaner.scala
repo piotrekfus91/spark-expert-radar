@@ -1,11 +1,13 @@
 package com.github.ser
 
 import com.github.ser.domain.User
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-class Cleaner(val sc: SparkContext) {
+class Cleaner(val sc: SparkContext) extends LazyLogging {
   def cleanUsers(users: RDD[User]): RDD[User] = {
+    logger.info("cleaning users")
     List(
       removeSpecialUsers,
       removeWithoutLocation
