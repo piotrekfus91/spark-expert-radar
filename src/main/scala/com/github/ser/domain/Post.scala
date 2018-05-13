@@ -2,7 +2,7 @@ package com.github.ser.domain
 
 case class Post(
                 id: Long,
-                parentId: Long,
+                parentId: Option[Long],
                 postType: PostType,
                 score: Long,
                 tags: List[String]
