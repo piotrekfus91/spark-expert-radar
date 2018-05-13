@@ -8,7 +8,9 @@ case class Post(
                 tags: List[String]
                )
 
-sealed trait PostType
+sealed trait PostType {
+  def name = this.getClass.getSimpleName.dropRight(1)
+}
 case object Question extends PostType
 case object Answer extends PostType
 

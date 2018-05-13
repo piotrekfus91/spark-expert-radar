@@ -12,6 +12,6 @@ class IntegrationTests extends Suites(
 
 ) with BeforeAndAfterAll {
 
-  override protected def beforeAll(): Unit = new ElasticsearchSetup(Elasticsearch.client).removeIndex(Index.indexPrefix)
+  override protected def beforeAll(): Unit = new ElasticsearchSetup(Elasticsearch.client).removeIndex(Index.indexRemovalPrefix)
 
 }

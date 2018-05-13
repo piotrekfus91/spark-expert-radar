@@ -1,0 +1,13 @@
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "postId": { "type": "long" },
+        "parentId": { "type": "long" },
+        "postType": { "type": "text", "index": "not_analyzed" },
+        "score": { "type": "long" },
+        "tags": { "type": "array" }
+      }
+    }
+  }
+}

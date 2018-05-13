@@ -17,7 +17,7 @@ object Main extends App with LazyLogging {
   val indexName = "users"
 
   val esSetup = new ElasticsearchSetup(esClient)
-  esSetup.setupIndex(indexName, Source.fromFile(Main.getClass.getClassLoader.getResource("elasticsearch/index.json").getPath).mkString)
+  esSetup.setupIndex(indexName, Source.fromFile(Main.getClass.getClassLoader.getResource("elasticsearch/user_mapping.json").getPath).mkString)
 
   val sparkConf = new SparkConf()
     .setAppName(this.getClass.getSimpleName)
