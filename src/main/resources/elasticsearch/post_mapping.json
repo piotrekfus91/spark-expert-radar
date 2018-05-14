@@ -4,7 +4,7 @@
       "properties": {
         "postId": { "type": "long" },
         "parentId": { "type": "long" },
-        "postType": { "type": "text", "index": "not_analyzed" },
+        "postType": { "type": "keyword" },
         "score": { "type": "long" },
         "tags": { "type": "array" }
       }
