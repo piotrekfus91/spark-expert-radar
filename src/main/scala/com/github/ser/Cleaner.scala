@@ -1,6 +1,6 @@
 package com.github.ser
 
-import com.github.ser.domain.User
+import com.github.ser.domain.{Answer, Post, Question, User}
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -16,4 +16,15 @@ class Cleaner(val sc: SparkContext) extends LazyLogging {
 
   private val removeSpecialUsers = (users: RDD[User]) => users.filter(_.id > 0)
   private val removeWithoutLocation = (users: RDD[User]) => users.filter(_.location.isDefined)
+
+  def cleanPosts(posts: RDD[Post]): RDD[Post] = {
+    logger.info("cleaning posts")
+    List(
+      removePostsWithUnknownPostType,
+      removePostsWithoutTags
+    ).reduce(_ andThen _)(posts)
+  }
+
+  private val removePostsWithUnknownPostType = (posts: RDD[Post]) => posts.filter(post => List(Question, Answer).contains(post.postType))
+  private val removePostsWithoutTags = (posts: RDD[Post]) => posts.filter(_.tags.nonEmpty)
 }
