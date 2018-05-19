@@ -1,6 +1,6 @@
 package com.github.ser
 
-import com.github.ser.domain.Answer
+import com.github.ser.domain.{Answer, Point, Post, User}
 import com.github.ser.elasticsearch.{ElasticsearchSetup, Query}
 import com.redis.RedisClient
 import com.sksamuel.elastic4s.ElasticsearchClientUri
@@ -44,7 +44,7 @@ object Main extends App with LazyLogging {
     esSaver.savePostsInEs _
   ).reduce(_ andThen _)(reader.loadPosts(postsPath))
 
-  val p = reader.loadPosts(postsPath)
+  val usersToUpdate = reader.loadPosts(postsPath)
     .filter(_.postType == Answer)
     .map { post =>
       val maybeUserWithTags = for {
@@ -53,9 +53,19 @@ object Main extends App with LazyLogging {
         userId <- post.ownerUserId
         user <- query.queryUsersSingle(s"userId:$userId")
       } yield (user, questionPost)
-      maybeUserWithTags.foreach(println)
-      post
-    }.collect()
+      maybeUserWithTags.map { case (user: User, post: Post) =>
+        val otherPostPoints = user.points.filter(_.postId != post.id)
+        val addedTags = post.tags.map(tag => Point(post.id, tag, post.score))
+        user.copy(points = otherPostPoints ++ addedTags)
+      }
+    }
+    .filter(_.isDefined)
+    .map(_.get)
+
+  Seq(
+    geocoder.fetchGeoResults _,
+    esSaver.saveUsersInEs _
+  ).reduce(_ andThen _)(usersToUpdate)
 
   sc.stop()
 
