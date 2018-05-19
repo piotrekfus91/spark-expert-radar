@@ -38,13 +38,14 @@ class Reader(sc: SparkContext) {
     }
 
     def extractRequiredAttribute(attributeName: String): String = {
-      extractAttribute(attributeName).getOrElse(throw new RuntimeException(s"cannot find attribute Id in $line"))
+      extractAttribute(attributeName).getOrElse(throw new RuntimeException(s"cannot find attribute $attributeName in $line"))
     }
 
     User(
       extractRequiredAttribute("Id").toLong,
       extractRequiredAttribute("DisplayName"),
       extractAttribute("Location"),
+      extractRequiredAttribute("Reputation").toLong,
       extractRequiredAttribute("UpVotes").toLong,
       extractRequiredAttribute("DownVotes").toLong
     )
@@ -61,7 +62,7 @@ class Reader(sc: SparkContext) {
     }
 
     def extractRequiredAttribute(attributeName: String): String = {
-      extractAttribute(attributeName).getOrElse(throw new RuntimeException(s"cannot find attribute Id in $line"))
+      extractAttribute(attributeName).getOrElse(throw new RuntimeException(s"cannot find attribute $attributeName in $line"))
     }
 
     Post(
@@ -69,6 +70,7 @@ class Reader(sc: SparkContext) {
       extractAttribute("ParentId").map(_.toLong),
       PostType(extractRequiredAttribute("PostTypeId")),
       extractRequiredAttribute("Score").toLong,
+      extractAttribute("OwnerUserId").map(_.toLong),
       extractAttribute("Tags").map(_.split("&gt;").map(_.substring("&lt;".length)).toList).getOrElse(List.empty)
     )
   }

@@ -9,6 +9,7 @@ case class Post(
                 parentId: Option[Long],
                 postType: PostType,
                 score: Long,
+                ownerUserId: Option[Long],
                 tags: List[String]
                )
 
@@ -26,5 +27,11 @@ object PostType extends LazyLogging {
     case "1" => Question
     case "2" => Answer
     case other => otherCache(other)
+  }
+
+  def fromName(name: String) = name match {
+    case "Question" => Question
+    case "Answer" => Answer
+    case _ => throw new RuntimeException(s"non deserializable name: $name")
   }
 }

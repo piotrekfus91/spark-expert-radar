@@ -13,8 +13,12 @@ class EsSaver(sc: SparkContext) extends LazyLogging {
       Map(
         "userId" -> user.id,
         "displayName" -> user.displayName,
+        "reputation" -> user.reputation,
+        "upvotes" -> user.upvotes,
+        "downvotes" -> user.downvotes,
         "location" -> user.location.getOrElse(""),
-        "geolocation" -> user.geoResults.find(_ => true).map(geoResult => Seq(geoResult.latitude, geoResult.longitude)).map(_.mkString(",")).getOrElse("")
+        "geolocation" -> user.geoResults.find(_ => true).map(geoResult => Seq(geoResult.latitude, geoResult.longitude)).map(_.mkString(",")).getOrElse(""),
+        "points" -> user.points
       )
     }.saveToEs(s"${sc.getConf.get("es.index")}-user/doc", Map("es.mapping.id" -> "userId"))
     users
@@ -28,6 +32,7 @@ class EsSaver(sc: SparkContext) extends LazyLogging {
         "parentId" -> post.parentId.orElse(null),
         "postType" -> post.postType.name,
         "score" -> post.score,
+        "ownerUserId" -> post.ownerUserId,
         "tags" -> post.tags
       )
     }.saveToEs(s"${sc.getConf.get("es.index")}-post/doc", Map("es.mapping.id" -> "postId"))

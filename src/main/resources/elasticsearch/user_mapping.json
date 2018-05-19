@@ -4,8 +4,19 @@
       "properties": {
         "userId": { "type": "long" },
         "displayName": { "type": "text" },
+        "reputation": { "type": "long" },
+        "upvotes": { "type": "long" },
+        "downvotes": { "type": "long" },
         "location": { "type": "text" },
-        "geolocation": { "type": "geo_point" }
+        "geolocation": { "type": "geo_point" },
+        "points": {
+          "type": "nested",
+          "properties": {
+            "postId": { "type": "long" },
+            "tag": { "type": "keyword" },
+            "score": { "type": "long" }
+          }
+        }
       }
     }
   }

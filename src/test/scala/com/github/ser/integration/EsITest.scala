@@ -60,7 +60,34 @@ class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matche
         hit.sourceAsMap("parentId") shouldBe null
         hit.sourceAsMap("postType") shouldBe "Question"
         hit.sourceAsMap("score") shouldBe 543
+        hit.sourceAsMap("ownerUserId") shouldBe 8
         hit.sourceAsMap("tags") shouldBe List("c#", "winforms", "type-conversion", "decimal", "opacity")
     }
+
+    query.queryPostsSingle("tags:winforms") shouldBe Some(Post(4, None, Question, 543, Some(8), List("c#", "winforms", "type-conversion", "decimal", "opacity")))
+  }
+
+  test("save user with points") {
+    val user = User(345, "UserWithPoints", None).copy(points = List(Point(567, "Java", 123), Point(765, "Scala", -321)))
+    esSaver.saveUsersInEs(sc.parallelize(List(user)))
+
+    val response = client.execute {
+      search(Index.userIndex) query "displayName:UserWithPoints"
+    }.await
+
+    response match {
+      case Left(s) => fail(s"error while contacting with ES: $s")
+      case Right(r) =>
+        r.result.hits.size shouldBe 1
+        val hit = r.result.hits.hits(0)
+        hit.sourceAsMap("userId") shouldBe 345
+        hit.sourceAsMap("displayName") shouldBe "UserWithPoints"
+        hit.sourceAsMap("points") shouldBe List(
+          Map("postId" -> 567, "tag" -> "Java", "score" -> 123),
+          Map("postId" -> 765, "tag" -> "Scala", "score" -> -321)
+        )
+    }
+
+    query.queryUsersSingle("displayName:UserWithPoints") shouldBe Some(user)
   }
 }

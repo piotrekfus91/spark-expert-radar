@@ -4,8 +4,15 @@ case class User(
                  id: Long,
                  displayName: String,
                  location: Option[String],
-                 reputations: Long = 0,
+                 reputation: Long = 0,
                  upvotes: Long = 0,
                  downvotes: Long = 0,
-                 geoResults: List[GeoResult] = List.empty
+                 geoResults: List[GeoResult] = List.empty,
+                 points: List[Point] = List.empty
                )
+
+case class Point(
+                  postId: Long,
+                  tag: String,
+                  score: Long
+                )
