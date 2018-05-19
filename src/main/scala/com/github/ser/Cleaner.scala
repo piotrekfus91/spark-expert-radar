@@ -20,11 +20,9 @@ class Cleaner(val sc: SparkContext) extends LazyLogging {
   def cleanPosts(posts: RDD[Post]): RDD[Post] = {
     logger.info("cleaning posts")
     List(
-      removePostsWithUnknownPostType,
-      removePostsWithoutTags
+      removePostsWithUnknownPostType
     ).reduce(_ andThen _)(posts)
   }
 
   private val removePostsWithUnknownPostType = (posts: RDD[Post]) => posts.filter(post => List(Question, Answer).contains(post.postType))
-  private val removePostsWithoutTags = (posts: RDD[Post]) => posts.filter(_.tags.nonEmpty)
 }

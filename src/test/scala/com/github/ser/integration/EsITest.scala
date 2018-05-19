@@ -1,10 +1,11 @@
 package com.github.ser.integration
 
-import com.github.ser.setup.ElasticsearchSetup
-import com.github.ser.test.Index
 import com.github.ser._
-import com.sksamuel.elastic4s.http.HttpClient
+import com.github.ser.domain.{Point, Post, Question, User}
+import com.github.ser.elasticsearch.{ElasticsearchSetup, Query}
+import com.github.ser.test.Index
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.HttpClient
 import org.apache.spark.SparkContext
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
@@ -13,6 +14,7 @@ class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matche
   val cleaner = new Cleaner(sc)
   val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new MapBasedGeoResultCache)
   val esSaver = new EsSaver(sc)
+  val query = new Query(client, Index.indexPrefix)
 
   override protected def beforeAll(): Unit = {
     new ElasticsearchSetup(client).setupIndex(Index.userIndex, Index.userMapping)
@@ -20,7 +22,7 @@ class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matche
   }
 
   test("save users to es") {
-    val users = Seq(
+    Seq(
       cleaner.cleanUsers _,
       geocoder.fetchGeoResults _,
       esSaver.saveUsersInEs _
@@ -43,7 +45,7 @@ class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matche
   }
 
   test("save posts to es") {
-    val posts = Seq(
+    Seq(
       esSaver.savePostsInEs _
     ).reduce(_ andThen _)(reader.loadPosts(this.getClass.getClassLoader.getResource("Posts_2.xml").getPath)).collect().toList
 

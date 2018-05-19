@@ -1,4 +1,4 @@
-package com.github.ser.setup
+package com.github.ser.elasticsearch
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
