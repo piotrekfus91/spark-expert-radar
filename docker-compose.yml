@@ -62,7 +62,6 @@ services:
     volumes:
       - ./dockerFiles/redis:/data
     entrypoint: redis-server --appendonly yes
-    restart: always
 
 volumes:
   esdata1:

@@ -1,4 +1,7 @@
 {
+  "settings": {
+    "index.mapping.total_fields.limit": 10000
+  },
   "mappings": {
     "doc": {
       "properties": {
@@ -16,6 +19,18 @@
             "tag": { "type": "keyword" },
             "score": { "type": "long" }
           }
+        },
+        "scoresSum": {
+          "dynamic": true,
+          "properties": {}
+        },
+        "scoresAvg": {
+          "dynamic": true,
+          "properties": {}
+        },
+        "scoresCount": {
+          "dynamic": true,
+          "properties": {}
         }
       }
     }

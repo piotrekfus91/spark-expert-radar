@@ -15,4 +15,11 @@ case class Point(
                   postId: Long,
                   tag: String,
                   score: Long
-                )
+                ) {
+  val escapedTag = {
+    val firstNonDotPosition = tag.zipWithIndex.find(_._1 != '.').map(_._2).getOrElse(throw new RuntimeException(s"tag [$tag] contains dots only or is empty"))
+    val correctPrefix = tag.drop(firstNonDotPosition)
+    val lastNonDotPosition = correctPrefix.reverse.zipWithIndex.find(_._1 != '.').map(_._2).get
+    correctPrefix.dropRight(lastNonDotPosition).replace(".", "_")
+  }
+}

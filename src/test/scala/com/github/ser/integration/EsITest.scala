@@ -88,6 +88,18 @@ class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matche
           Map("postId" -> 567, "tag" -> "Java", "score" -> 123),
           Map("postId" -> 765, "tag" -> "Scala", "score" -> -321)
         )
+        hit.sourceAsMap("scoresSum") shouldBe Map(
+          "Java" -> 123,
+          "Scala" -> -321
+        )
+        hit.sourceAsMap("scoresAvg") shouldBe Map(
+          "Java" -> 123,
+          "Scala" -> -321
+        )
+        hit.sourceAsMap("scoresCount") shouldBe Map(
+          "Java" -> 1,
+          "Scala" -> 1
+        )
     }
 
     query.queryUsersSingle("displayName:UserWithPoints") shouldBe Some(user)
