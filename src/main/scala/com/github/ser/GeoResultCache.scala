@@ -16,6 +16,11 @@ trait GeoResultCache {
   def get(location: String): Option[List[GeoResult]]
 }
 
+class EmptyGeoResultCache extends GeoResultCache with Serializable {
+  override def save(location: String, geoResults: List[GeoResult]): Unit = {}
+  override def get(location: String): Option[List[GeoResult]] = None
+}
+
 class MapBasedGeoResultCache extends GeoResultCache with Serializable {
   val cache = mutable.Map[String, List[GeoResult]]()
   override def save(location: String, geoResults: List[GeoResult]): Unit = cache.put(location, geoResults)

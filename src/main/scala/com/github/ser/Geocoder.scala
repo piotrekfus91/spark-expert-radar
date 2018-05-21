@@ -69,3 +69,29 @@ class NominatimGeoEngine extends GeoEngine with LazyLogging with Serializable {
       }
   }
 }
+
+class GoogleGeoEngine(apiKey: String) extends GeoEngine with LazyLogging with Serializable {
+  override def buildQuery(host: String, location: String): String = s"$host/maps/api/geocode/json?address=${location.replace(" ", "+")}&key=$apiKey"
+
+  override def parse(user: User, json: Any): List[GeoResult] = json match {
+    case None =>
+      logger.warn(s"cannot fetch georesults for $user")
+      List.empty
+    case Some(parsed) =>
+      val results = parsed.asInstanceOf[Map[String, Any]]("results").asInstanceOf[List[Map[String, Any]]]
+      val firstResult = results.headOption
+      firstResult.map { result =>
+        val displayName = result("formatted_address").asInstanceOf[String]
+        val geometry = result("geometry").asInstanceOf[Map[String, Any]]
+        val bounds = geometry("bounds").asInstanceOf[Map[String, Any]]
+        val northeast = bounds("northeast").asInstanceOf[Map[String, Double]]
+        val southwest = bounds("southwest").asInstanceOf[Map[String, Double]]
+        val location = geometry("location").asInstanceOf[Map[String, Double]]
+        List(
+          GeoResult(displayName, location("lat"), location("lng"), 1, BoundingBox(
+            southwest("lat"), northeast("lat"), northeast("lng"), southwest("lng")
+          ))
+        )
+      }.getOrElse(List.empty)
+  }
+}
