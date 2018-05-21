@@ -10,7 +10,7 @@ class GeocoderITest(sc: SparkContext, redis: RedisClient) extends FunSuite with 
   test("should read data from geocoder") {
     val reader = new Reader(sc)
     val cleaner = new Cleaner(sc)
-    val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new RedisGeoResultCache(redis, s"geocoderITest:${randomString(5)}"))
+    val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new RedisGeoResultCache(redis, s"geocoderITest:${randomString(5)}"), new NominatimGeoEngine)
 
     val users = Seq(
       cleaner.cleanUsers _,

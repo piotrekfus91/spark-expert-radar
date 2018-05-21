@@ -25,11 +25,11 @@ object Main extends App with LazyLogging {
   val sc = setupSpark
 
   val redis = new RedisClient("localhost", 6379) with Serializable
-  val geoResultCache = new RedisGeoResultCache(redis, "geoResult")
+  val geoResultCache = new RedisGeoResultCache(redis, "nominatim")
 
   val reader = new Reader(sc)
   val cleaner = new Cleaner(sc)
-  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", geoResultCache)
+  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", geoResultCache, new NominatimGeoEngine)
   val esSaver = new EsSaver(sc)
 
 //  val users = Seq(
@@ -66,6 +66,8 @@ object Main extends App with LazyLogging {
     geocoder.fetchGeoResults _,
     esSaver.saveUsersInEs _
   ).reduce(_ andThen _)(usersToUpdate)
+
+  println("finished")
 
   sc.stop()
 

@@ -12,7 +12,7 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matchers with BeforeAndAfterAll {
   val reader = new Reader(sc)
   val cleaner = new Cleaner(sc)
-  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new MapBasedGeoResultCache)
+  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new MapBasedGeoResultCache, new NominatimGeoEngine)
   val esSaver = new EsSaver(sc)
   val query = new Query(client, Index.indexPrefix)
 

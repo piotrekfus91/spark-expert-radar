@@ -64,7 +64,7 @@ class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec 
   ))
 
   "Geocoder without cache" when {
-    val sut = new Geocoder(sc, "http://localhost:3737", new MapBasedGeoResultCache)
+    val sut = new Geocoder(sc, "http://localhost:3737", new MapBasedGeoResultCache, new NominatimGeoEngine)
 
     "read correct geocoding data" should {
       "if data are sorted" in {
@@ -124,7 +124,7 @@ class GeocoderTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec 
 
   "Geocoder with mock cache" when {
     val cache = new MapBasedGeoResultCache
-    val sut = new Geocoder(sc, "http://localhost:3737", cache)
+    val sut = new Geocoder(sc, "http://localhost:3737", cache, new NominatimGeoEngine)
 
     "use cache correctly" should {
       "use geocoder if key not exists in cache" in {
