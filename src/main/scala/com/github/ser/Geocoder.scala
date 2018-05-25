@@ -83,15 +83,17 @@ class GoogleGeoEngine(apiKey: String) extends GeoEngine with LazyLogging with Se
       firstResult.map { result =>
         val displayName = result("formatted_address").asInstanceOf[String]
         val geometry = result("geometry").asInstanceOf[Map[String, Any]]
-        val bounds = geometry("bounds").asInstanceOf[Map[String, Any]]
-        val northeast = bounds("northeast").asInstanceOf[Map[String, Double]]
-        val southwest = bounds("southwest").asInstanceOf[Map[String, Double]]
-        val location = geometry("location").asInstanceOf[Map[String, Double]]
-        List(
-          GeoResult(displayName, location("lat"), location("lng"), 1, BoundingBox(
-            southwest("lat"), northeast("lat"), northeast("lng"), southwest("lng")
-          ))
-        )
+        val maybeBounds = geometry.get("bounds").map(_.asInstanceOf[Map[String, Any]])
+        maybeBounds.map { bounds =>
+          val northeast = bounds("northeast").asInstanceOf[Map[String, Double]]
+          val southwest = bounds("southwest").asInstanceOf[Map[String, Double]]
+          val location = geometry("location").asInstanceOf[Map[String, Double]]
+          List(
+            GeoResult(displayName, location("lat"), location("lng"), 1, BoundingBox(
+              southwest("lat"), northeast("lat"), northeast("lng"), southwest("lng")
+            ))
+          )
+        }.getOrElse(List.empty)
       }.getOrElse(List.empty)
   }
 }

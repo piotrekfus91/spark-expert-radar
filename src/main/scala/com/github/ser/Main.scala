@@ -16,6 +16,8 @@ object Main extends App with LazyLogging {
   val postsPath = args(1)
   logger.info(s"posts file: $postsPath")
 
+  val apiKey = System.getProperty("google.api.key")
+
   val indexName = "ser"
 
   val esClient = HttpClient(ElasticsearchClientUri("localhost", 9200))
@@ -25,11 +27,11 @@ object Main extends App with LazyLogging {
   val sc = setupSpark
 
   val redis = new RedisClient("localhost", 6379) with Serializable
-  val geoResultCache = new RedisGeoResultCache(redis, "nominatim")
+  val geoResultCache = new RedisGeoResultCache(redis, "google")
 
   val reader = new Reader(sc)
   val cleaner = new Cleaner(sc)
-  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", geoResultCache, new NominatimGeoEngine)
+  val geocoder = new Geocoder(sc, "https://maps.googleapis.com", geoResultCache, new GoogleGeoEngine(apiKey))
   val esSaver = new EsSaver(sc)
 
 //  val users = Seq(
