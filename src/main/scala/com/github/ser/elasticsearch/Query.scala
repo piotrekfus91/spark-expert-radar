@@ -1,7 +1,7 @@
 package com.github.ser.elasticsearch
 
 import com.github.ser.domain.{Point, Post, PostType, User}
-import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.http.search.{SearchHit, SearchHits}
 

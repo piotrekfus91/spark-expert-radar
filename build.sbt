@@ -4,6 +4,10 @@ version := "0.1"
 
 scalaVersion := "2.11.12"
 
+javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
+
+scalacOptions := Seq("-target:jvm-1.8")
+
 val spark = new {
   val version = "2.3.0"
   val modules = Seq("spark-core")
@@ -55,6 +59,12 @@ val avro = new {
   )
 }
 
+val metrics = new {
+  val deps = Seq(
+    "io.micrometer" % "micrometer-registry-influx" % "1.0.4"
+  )
+}
+
 val test = new {
   val deps = Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
@@ -64,7 +74,7 @@ val test = new {
   )
 }
 
-val dependencies = Seq(spark, logging, util, elasticsearch, elastic4s, redis, avro, test)
+val dependencies = Seq(spark, logging, util, elasticsearch, elastic4s, redis, avro, metrics, test)
 
 libraryDependencies ++= dependencies.flatMap(_.deps)
 

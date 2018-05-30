@@ -2,10 +2,12 @@ package com.github.ser
 
 import com.github.ser.domain.{Answer, Point, Post, User}
 import com.github.ser.elasticsearch.{ElasticsearchSetup, Query}
+import com.github.ser.metrics.{MetricsRegister, Micrometer}
 import com.redis.RedisClient
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.HttpClient
 import com.typesafe.scalalogging.LazyLogging
+import io.micrometer.core.instrument.Metrics
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.io.Source
@@ -26,20 +28,22 @@ object Main extends App with LazyLogging {
 
   val sc = setupSpark
 
+  val redisPrefix = "nominatim"
+
   val redis = new RedisClient("localhost", 6379) with Serializable
-  val geoResultCache = new RedisGeoResultCache(redis, "google")
+  val geoResultCache = new RedisGeoResultCache(redis, "nominatim")
+
+  setupMetrics
 
   val reader = new Reader(sc)
   val cleaner = new Cleaner(sc)
-  val geocoder = new Geocoder(sc, "https://maps.googleapis.com", geoResultCache, new GoogleGeoEngine(apiKey))
+  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", geoResultCache, new TimedGeoEngine(new NominatimGeoEngine))
   val esSaver = new EsSaver(sc)
 
 //  val users = Seq(
 //    cleaner.cleanUsers _,
 //    esSaver.saveUsersInEs _
 //  ).reduce(_ andThen _)(reader.loadUsers(usersPath))
-
-//  logger.info(s"User indexing finished, indexed: ${users.count()}")
 
   val posts = Seq(
     cleaner.cleanPosts _,
@@ -86,5 +90,12 @@ object Main extends App with LazyLogging {
       .set("es.index", indexName)
 
     new SparkContext(sparkConf)
+  }
+
+  private def setupMetrics = {
+    Metrics.addRegistry(Micrometer.meterRegistry)
+    MetricsRegister.redis(redis, redisPrefix)
+    MetricsRegister.elasticsearch(esClient, indexName)
+    MetricsRegister.jvm()
   }
 }

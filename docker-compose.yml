@@ -63,10 +63,30 @@ services:
       - ./dockerFiles/redis:/data
     entrypoint: redis-server --appendonly yes
 
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - 8083:8083
+      - 8086:8086
+      - 8090:8090
+    volumes:
+      - influxdata:/var/lib/influxdb
+
+  chronograf:
+    image: chronograf:latest
+    container_name: chronograf
+    ports:
+      - 8888:8888
+    volumes:
+      - ./dockerFiles/chronograf:/var/lib/chronograf
+
 volumes:
   esdata1:
     driver: local
   esdata2:
     driver: local
   esdata3:
+    driver: local
+  influxdata:
     driver: local

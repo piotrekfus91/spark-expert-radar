@@ -28,7 +28,6 @@ class MapBasedGeoResultCache extends GeoResultCache with Serializable {
 }
 
 class RedisGeoResultCache(val redis: RedisClient, val prefix: String) extends GeoResultCache with LazyLogging with Serializable {
-
   override def save(location: String, geoResults: List[GeoResult]): Unit = {
     logger.trace(s"saving location $location as $geoResults")
     val key = buildKey(location)
@@ -43,11 +42,16 @@ class RedisGeoResultCache(val redis: RedisClient, val prefix: String) extends Ge
     val key = buildKey(location)
     val maybeBytes = redis.get[Array[Byte]](key)
     logger.trace(s"got geolocation from cache for $location: $maybeBytes")
-    maybeBytes.map { bytes =>
+    val entry = maybeBytes.map { bytes =>
       val bais = new ByteArrayInputStream(bytes)
       val in = AvroInputStream.json[GeoResult](bais)
       in.iterator.toList
     }
+    entry match {
+      case Some(_) => redis.incr(s"$prefix.cache.hit")
+      case None => redis.incr(s"$prefix.cache.miss")
+    }
+    entry
   }
 
   private def buildKey(location: String) = {
