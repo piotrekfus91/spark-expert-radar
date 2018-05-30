@@ -1,15 +1,13 @@
 package com.github.ser
-
 import com.github.ser.domain.{Point, Post, User}
 import com.typesafe.scalalogging.LazyLogging
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.Dataset
 import org.elasticsearch.spark._
 
-class EsSaver(sc: SparkContext) extends LazyLogging {
-  def saveUsersInEs(users: RDD[User]): RDD[User] = {
+class EsSaver extends SparkProvider with LazyLogging {
+  def saveUsersInEs(users: Dataset[User]): Dataset[User] = {
     logger.info("saving users to ES")
-    users.map { user =>
+    users.rdd.map { user =>
       val scores = Scores(user.points)
       Map(
         "userId" -> user.id,
@@ -24,13 +22,13 @@ class EsSaver(sc: SparkContext) extends LazyLogging {
         "scoresAvg" -> scores.avg,
         "scoresCount" -> scores.count
       )
-    }.saveToEs(s"${sc.getConf.get("es.index")}-user/doc", Map("es.mapping.id" -> "userId"))
+    }.saveToEs(s"${conf.get("es.index")}-user/doc", Map("es.mapping.id" -> "userId"))
     users
   }
 
-  def savePostsInEs(posts: RDD[Post]): RDD[Post] = {
+  def savePostsInEs(posts: Dataset[Post]): Dataset[Post] = {
     logger.info("saving posts to ES")
-    posts.map { post =>
+    posts.rdd.map { post =>
       Map(
         "postId" -> post.id,
         "parentId" -> post.parentId.orElse(null),
@@ -39,7 +37,7 @@ class EsSaver(sc: SparkContext) extends LazyLogging {
         "ownerUserId" -> post.ownerUserId,
         "tags" -> post.tags
       )
-    }.saveToEs(s"${sc.getConf.get("es.index")}-post/doc", Map("es.mapping.id" -> "postId"))
+    }.saveToEs(s"${conf.get("es.index")}-post/doc", Map("es.mapping.id" -> "postId"))
     posts
   }
 }

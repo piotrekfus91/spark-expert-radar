@@ -1,13 +1,19 @@
 package com.github.ser.test
 
-import org.apache.spark.{SparkConf, SparkContext}
+import com.github.ser.domain.{Post, PostType, User}
+import org.apache.spark.sql.{Encoders, SparkSession}
 
-object Spark {
-  val sparkConf = new SparkConf()
-    .setAppName(this.getClass.getSimpleName)
-    .setMaster("local[*]")
-    .set("geocoding.host", "http://localhost:3737")
-    .set("es.index", Index.indexPrefix)
+trait Spark {
+  val spark = SparkSession.builder()
+    .appName(this.getClass.getSimpleName)
+    .master("local[*]")
+    .config("geocoding.host", "http://localhost:3737")
+    .config("es.index", Index.indexPrefix)
+    .getOrCreate()
 
-  val sc = new SparkContext(sparkConf)
+  val sc = spark.sparkContext
+
+  implicit val postTypeEncoder = Encoders.kryo[PostType]
+  implicit val postEncoder = Encoders.kryo[Post]
+  implicit val userEncoder = Encoders.kryo[User]
 }

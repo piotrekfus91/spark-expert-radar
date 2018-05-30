@@ -1,14 +1,16 @@
 package com.github.ser
 
 import com.github.ser.domain.{BoundingBox, GeoResult, User}
-import com.github.ser.test.Google
+import com.github.ser.test.{Google, Spark}
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.apache.spark.SparkContext
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 
-class NominatimGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec with Matchers with MockFactory {
+class NominatimGeoCodingTest(wireMock: WireMockServer) extends WordSpec with Matchers with MockFactory with Spark {
+  import spark.implicits._
+
   val location1 =
     """
       |{
@@ -57,7 +59,7 @@ class NominatimGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends
   val geocoderUnsortedResponse = s"[$location2, $location1]"
 
   val users = List(User(123, "some user", Some("Warsaw")))
-  val usersRdd = sc.parallelize(users)
+  val usersRdd = sc.parallelize(users).toDS
 
   val expectedUser = User(123, "some user", Some("Warsaw")).copy(geoResults = List(
     GeoResult("Warsaw, Warszawa, Masovian Voivodeship, Poland", 52.2319237, 21.0067265, 0.41072546160754, BoundingBox(52.0978507, 52.3681531, 20.8516882, 21.2711512)),
@@ -65,7 +67,7 @@ class NominatimGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends
   ))
 
   "Geocoder without cache" when {
-    val sut = new Geocoder(sc, "http://localhost:3737", new MapBasedGeoResultCache, new NominatimGeoEngine)
+    val sut = new Geocoder("http://localhost:3737", new MapBasedGeoResultCache, new NominatimGeoEngine)
 
     "read correct geocoding data" should {
       "if data are sorted" in {
@@ -117,7 +119,7 @@ class NominatimGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends
             .willReturn(aResponse().withBody(geocoderSortedResponse))
         )
 
-        val usersWithGeoResults = sut.fetchGeoResults(sc.parallelize(Seq(User(1, "homeless user", None)))).collect()
+        val usersWithGeoResults = sut.fetchGeoResults(sc.parallelize(Seq(User(1, "homeless user", None))).toDS).collect()
         usersWithGeoResults should contain(User(1,"homeless user", None))
       }
     }
@@ -125,7 +127,7 @@ class NominatimGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends
 
   "Geocoder with mock cache" when {
     val cache = new MapBasedGeoResultCache
-    val sut = new Geocoder(sc, "http://localhost:3737", cache, new NominatimGeoEngine)
+    val sut = new Geocoder("http://localhost:3737", cache, new NominatimGeoEngine)
 
     "use cache correctly" should {
       "use geocoder if key not exists in cache" in {
@@ -133,9 +135,9 @@ class NominatimGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends
           get(urlPathMatching("/search"))
             .willReturn(aResponse().withBody(geocoderSortedResponse))
         )
-        val usersRdd = sc.parallelize(Seq(User(1, "some user", Some("single"))))
+        val usersDs = sc.parallelize(Seq(User(1, "some user", Some("single")))).toDS
 
-        val usersWithGeoResults = sut.fetchGeoResults(usersRdd).collect()
+        val usersWithGeoResults = sut.fetchGeoResults(usersDs).collect()
         usersWithGeoResults(0).geoResults should not be empty
 
         wireMock.verify(1, getRequestedFor(urlPathMatching("/search")).withQueryParam("q", equalTo("single")))
@@ -147,9 +149,9 @@ class NominatimGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends
             .willReturn(aResponse().withBody(geocoderSortedResponse))
         )
         cache.save("otherSingle", List.empty)
-        val usersRdd = sc.parallelize(Seq(User(1, "some user", Some("otherSingle"))))
+        val usersDs = sc.parallelize(Seq(User(1, "some user", Some("otherSingle")))).toDS
 
-        sut.fetchGeoResults(usersRdd).collect()
+        sut.fetchGeoResults(usersDs).collect()
 
         wireMock.verify(0, getRequestedFor(urlPathMatching("/search")).withQueryParam("q", equalTo("otherSingle")))
       }
@@ -157,7 +159,9 @@ class NominatimGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends
   }
 }
 
-class GoogleGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends WordSpec with Matchers with MockFactory {
+class GoogleGeoCodingTest(wireMock: WireMockServer) extends WordSpec with Matchers with MockFactory with Spark {
+  import spark.implicits._
+
   val googleResponse =
     """
       |{
@@ -228,14 +232,14 @@ class GoogleGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends Wo
 
 
   val users = List(User(123, "some user", Some("Warsaw")))
-  val usersRdd = sc.parallelize(users)
+  val usersRdd = sc.parallelize(users).toDS()
 
   val expectedUser = User(123, "some user", Some("Warsaw")).copy(geoResults = List(
     GeoResult("Warsaw, Poland", 52.2296756, 21.0122287, 1, BoundingBox(52.0978767, 52.3679992, 21.2710984, 20.8512898))
   ))
 
   "Geocoder without cache" when {
-    val sut = new Geocoder(sc, "http://localhost:3737", new MapBasedGeoResultCache, new GoogleGeoEngine(Google.apiKey))
+    val sut = new Geocoder("http://localhost:3737", new MapBasedGeoResultCache, new GoogleGeoEngine(Google.apiKey))
 
     "read correct geocoding data" should {
       "if parameters are correct" in {
@@ -268,7 +272,7 @@ class GoogleGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends Wo
             .willReturn(aResponse().withBody(googleResponse))
         )
 
-        val usersWithGeoResults = sut.fetchGeoResults(sc.parallelize(Seq(User(1, "homeless user", None)))).collect()
+        val usersWithGeoResults = sut.fetchGeoResults(sc.parallelize(Seq(User(1, "homeless user", None))).toDS()).collect()
         usersWithGeoResults should contain(User(1,"homeless user", None))
       }
     }
@@ -276,7 +280,7 @@ class GoogleGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends Wo
 
   "Geocoder with mock cache" when {
     val cache = new MapBasedGeoResultCache
-    val sut = new Geocoder(sc, "http://localhost:3737", cache, new GoogleGeoEngine(Google.apiKey))
+    val sut = new Geocoder("http://localhost:3737", cache, new GoogleGeoEngine(Google.apiKey))
 
     "use cache correctly" should {
       "use geocoder if key not exists in cache" in {
@@ -284,9 +288,9 @@ class GoogleGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends Wo
           get(urlPathMatching("/maps/api/geocode/json"))
             .willReturn(aResponse().withBody(googleResponse))
         )
-        val usersRdd = sc.parallelize(Seq(User(1, "some user", Some("single"))))
+        val usersDs = sc.parallelize(Seq(User(1, "some user", Some("single")))).toDS
 
-        val usersWithGeoResults = sut.fetchGeoResults(usersRdd).collect()
+        val usersWithGeoResults = sut.fetchGeoResults(usersDs).collect()
         usersWithGeoResults(0).geoResults should not be empty
 
         wireMock.verify(1, getRequestedFor(urlPathMatching("/maps/api/geocode/json")).withQueryParam("address", equalTo("single")))
@@ -298,9 +302,9 @@ class GoogleGeoCodingTest(sc: SparkContext, wireMock: WireMockServer) extends Wo
             .willReturn(aResponse().withBody(googleResponse))
         )
         cache.save("otherSingle", List.empty)
-        val usersRdd = sc.parallelize(Seq(User(1, "some user", Some("otherSingle"))))
+        val usersDS = sc.parallelize(Seq(User(1, "some user", Some("otherSingle")))).toDS
 
-        sut.fetchGeoResults(usersRdd).collect()
+        sut.fetchGeoResults(usersDS).collect()
 
         wireMock.verify(0, getRequestedFor(urlPathMatching("/maps/api/geocode/json")).withQueryParam("address", equalTo("otherSingle")))
       }

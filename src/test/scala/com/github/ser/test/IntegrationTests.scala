@@ -6,8 +6,8 @@ import org.scalatest.{BeforeAndAfterAll, Suites}
 
 class IntegrationTests extends Suites(
 
-  new GeocoderITest(Spark.sc, Redis.client),
-  new EsITest(Spark.sc, Elasticsearch.client),
+  new GeocoderITest(Redis.client),
+  new EsITest(Elasticsearch.client),
   new RedisGeoResultCacheTest(Redis.client)
 
 ) with BeforeAndAfterAll {

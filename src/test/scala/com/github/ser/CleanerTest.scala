@@ -1,10 +1,10 @@
 package com.github.ser
 
 import com.github.ser.domain._
-import org.apache.spark.SparkContext
+import com.github.ser.test.Spark
 import org.scalatest.{Matchers, WordSpec}
 
-class CleanerTest(sc: SparkContext) extends WordSpec with Matchers {
+class CleanerTest extends WordSpec with Matchers with Spark {
 
   val technicalUser = User(-1, "technical", Some("Somewhere"))
   val normalUser = User(1, "normal user", Some("Warsaw"))
@@ -16,11 +16,13 @@ class CleanerTest(sc: SparkContext) extends WordSpec with Matchers {
   val emptyTagsPost = Post(3, None, Answer, 3, Some(3), List.empty)
   val postList = List(normalPost, unknownPostType)
 
-  val sut = new Cleaner(sc)
+  import spark.implicits._
+
+  val sut = new Cleaner()
 
   "Cleaner" when {
     "clean users" should {
-      val cleanedUsers = sut.cleanUsers(sc.parallelize(userList)).collect()
+      val cleanedUsers = sut.cleanUsers(sc.parallelize(userList).toDS).collect()
 
       "contain normal user" in {
         cleanedUsers should contain(normalUser)
@@ -36,7 +38,7 @@ class CleanerTest(sc: SparkContext) extends WordSpec with Matchers {
     }
 
     "clean posts" should {
-      val cleanedPosts = sut.cleanPosts(sc.parallelize(postList)).collect()
+      val cleanedPosts = sut.cleanPosts(sc.parallelize(postList).toDS).collect()
 
       "contain normal post" in {
         cleanedPosts should contain(normalPost)

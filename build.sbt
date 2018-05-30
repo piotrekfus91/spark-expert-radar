@@ -10,7 +10,7 @@ scalacOptions := Seq("-target:jvm-1.8")
 
 val spark = new {
   val version = "2.3.0"
-  val modules = Seq("spark-core")
+  val modules = Seq("spark-core", "spark-sql")
   val deps = modules.map { "org.apache.spark" %% _ % version }
 }
 

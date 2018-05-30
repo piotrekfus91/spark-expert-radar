@@ -3,17 +3,18 @@ package com.github.ser.integration
 import com.github.ser._
 import com.github.ser.domain.{Point, Post, Question, User}
 import com.github.ser.elasticsearch.{ElasticsearchSetup, Query}
-import com.github.ser.test.Index
+import com.github.ser.test.{Index, Spark}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
-import org.apache.spark.SparkContext
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
-class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matchers with BeforeAndAfterAll {
-  val reader = new Reader(sc)
-  val cleaner = new Cleaner(sc)
-  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new MapBasedGeoResultCache, new NominatimGeoEngine)
-  val esSaver = new EsSaver(sc)
+class EsITest(client: HttpClient) extends FunSuite with Matchers with BeforeAndAfterAll with Spark {
+  import spark.implicits._
+
+  val reader = new Reader()
+  val cleaner = new Cleaner()
+  val geocoder = new Geocoder("https://nominatim.openstreetmap.org", new MapBasedGeoResultCache, new NominatimGeoEngine)
+  val esSaver = new EsSaver()
   val query = new Query(client, Index.indexPrefix)
 
   override protected def beforeAll(): Unit = {
@@ -71,7 +72,7 @@ class EsITest(sc: SparkContext, client: HttpClient) extends FunSuite with Matche
 
   test("save user with points") {
     val user = User(345, "UserWithPoints", None).copy(points = List(Point(567, "Java", 123), Point(765, "Scala", -321)))
-    esSaver.saveUsersInEs(sc.parallelize(List(user)))
+    esSaver.saveUsersInEs(sc.parallelize(List(user)).toDS)
 
     val response = client.execute {
       search(Index.userIndex) query "displayName:UserWithPoints"

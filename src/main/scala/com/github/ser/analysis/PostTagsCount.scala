@@ -1,11 +1,11 @@
 package com.github.ser.analysis
 
 object PostTagsCount extends App with AnalysisBase {
+  import spark.implicits._
+
   reader.loadPosts("/media/pfus/MAIN/ser/Posts.xml")
     .flatMap(_.tags)
-    .map((_, 1))
-    .reduceByKey(_ + _)
-    .sortBy(_._2)
-    .collect()
-    .foreach(println)
+    .groupBy($"value")
+    .count()
+    .show()
 }

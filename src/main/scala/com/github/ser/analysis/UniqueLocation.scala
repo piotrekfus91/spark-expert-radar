@@ -1,9 +1,9 @@
 package com.github.ser.analysis
 
 object UniqueLocation extends AnalysisBase with App {
+  import spark.implicits._
   val uniqueLocations = reader.loadUsers("/home/pfus/Studia/bigdata/projekt/data/Users.xml")
-    .filter(_.location.isDefined)
-    .map(_.location.get)
+    .flatMap(_.location)
     .map(_.toLowerCase())
     .distinct()
     .count()

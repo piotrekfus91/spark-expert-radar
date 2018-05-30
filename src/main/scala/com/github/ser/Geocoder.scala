@@ -1,5 +1,6 @@
 package com.github.ser
 
+
 import java.util.concurrent.Callable
 
 import com.github.ser.domain.{BoundingBox, GeoResult, User}
@@ -7,14 +8,13 @@ import com.typesafe.scalalogging.LazyLogging
 import io.micrometer.core.instrument.Metrics
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClients
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{Dataset, Encoder}
 
 import scala.io.Source
 import scala.util.parsing.json.JSON
 
-class Geocoder(sc: SparkContext, host: String, geoResultCache: GeoResultCache, geoEngine: GeoEngine) extends LazyLogging with Serializable {
-  def fetchGeoResults(users: RDD[User]): RDD[User] = {
+class Geocoder(host: String, geoResultCache: GeoResultCache, geoEngine: GeoEngine) extends LazyLogging with Serializable {
+  def fetchGeoResults(users: Dataset[User])(implicit userEncoder: Encoder[User]): Dataset[User] = {
     logger.info("fetching geo results")
     users.map { user =>
       logger.debug(s"fetching geolocation for $user")

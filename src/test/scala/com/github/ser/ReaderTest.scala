@@ -1,13 +1,16 @@
 package com.github.ser
 
 import com.github.ser.domain.{Answer, Post, Question, User}
-import org.apache.spark.SparkContext
+import com.github.ser.test.Spark
 import org.scalatest.{FlatSpec, Matchers}
 
-class ReaderTest(sc: SparkContext) extends FlatSpec with Matchers {
-  val sut = new Reader(sc)
+class ReaderTest extends FlatSpec with Matchers with Spark {
+  import spark.implicits._
+
+  val sut = new Reader()
 
   it should "read users file to RDD" in {
+
     val users = sut.loadUsers(this.getClass.getClassLoader.getResource("Users_2.xml").getPath).collect()
 
     users should contain allOf(

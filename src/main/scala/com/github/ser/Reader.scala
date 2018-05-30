@@ -2,20 +2,20 @@ package com.github.ser
 
 import com.github.ser.domain.{Post, PostType, User}
 import com.github.ser.util.XmlUtil
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{Dataset, Encoder}
 
-class Reader(sc: SparkContext) {
-  def loadUsers(inputFile: String): RDD[User] = {
+class Reader extends SparkProvider {
+  def loadUsers(inputFile: String)(implicit userEncoder: Encoder[User]): Dataset[User] = {
     loadFile(inputFile).map(toUserCustomParser)
   }
 
-  def loadPosts(inputFile: String): RDD[Post] = {
+  def loadPosts(inputFile: String)(implicit postEncoder: Encoder[Post]): Dataset[Post] = {
     loadFile(inputFile).map(toPostCustomParser)
   }
 
-  private def loadFile(inputFile: String): RDD[String] = {
-    sc.textFile(inputFile)
+  private def loadFile(inputFile: String): Dataset[String] = {
+    import spark.implicits._
+    sqlContext.read.textFile(inputFile).as[String]
       .filter(_.contains("<row"))
   }
 

@@ -1,44 +1,25 @@
 package com.github.ser
 
 import com.github.ser.domain.{Answer, Point, Post, User}
-import com.github.ser.elasticsearch.{ElasticsearchSetup, Query}
+import com.github.ser.elasticsearch.ElasticsearchSetup
 import com.github.ser.metrics.{MetricsRegister, Micrometer}
-import com.redis.RedisClient
-import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.HttpClient
 import com.typesafe.scalalogging.LazyLogging
 import io.micrometer.core.instrument.Metrics
-import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.io.Source
 
-object Main extends App with LazyLogging {
+object Main extends App with SparkProvider with Resources with LazyLogging {
+
   val usersPath = args(0)
   logger.info(s"users file: $usersPath")
   val postsPath = args(1)
   logger.info(s"posts file: $postsPath")
 
-  val apiKey = System.getProperty("google.api.key")
+  override def geoEngineMode = NominatimMode
 
-  val indexName = "ser"
-
-  val esClient = HttpClient(ElasticsearchClientUri("localhost", 9200))
   setupElastic(esClient)
-  val query = new Query(esClient, indexName)
-
-  val sc = setupSpark
-
-  val redisPrefix = "nominatim"
-
-  val redis = new RedisClient("localhost", 6379) with Serializable
-  val geoResultCache = new RedisGeoResultCache(redis, "nominatim")
-
   setupMetrics
-
-  val reader = new Reader(sc)
-  val cleaner = new Cleaner(sc)
-  val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", geoResultCache, new TimedGeoEngine(new NominatimGeoEngine))
-  val esSaver = new EsSaver(sc)
 
 //  val users = Seq(
 //    cleaner.cleanUsers _,
@@ -52,7 +33,7 @@ object Main extends App with LazyLogging {
 
   val usersToUpdate = reader.loadPosts(postsPath)
     .filter(_.postType == Answer)
-    .map { post =>
+    .flatMap { post =>
       val maybeUserWithTags = for {
         parentId <- post.parentId
         questionPost <- query.queryPostsSingle(s"postId:$parentId")
@@ -65,8 +46,6 @@ object Main extends App with LazyLogging {
         user.copy(points = otherPostPoints ++ addedTags)
       }
     }
-    .filter(_.isDefined)
-    .map(_.get)
 
   Seq(
     geocoder.fetchGeoResults _,
@@ -75,21 +54,13 @@ object Main extends App with LazyLogging {
 
   println("finished")
 
-  sc.stop()
+  spark.stop()
 
   private def setupElastic(esClient: HttpClient) = {
     val esSetup = new ElasticsearchSetup(esClient)
     esSetup.setupIndex(s"$indexName-user", Source.fromFile(Main.getClass.getClassLoader.getResource("elasticsearch/user_mapping.json").getPath).mkString)
     esSetup.setupIndex(s"$indexName-post", Source.fromFile(Main.getClass.getClassLoader.getResource("elasticsearch/post_mapping.json").getPath).mkString)
-  }
-
-  private def setupSpark = {
-    val sparkConf = new SparkConf()
-      .setAppName(this.getClass.getSimpleName)
-      .setMaster("local[*]")
-      .set("es.index", indexName)
-
-    new SparkContext(sparkConf)
+    spark.conf.set("es.index", indexName)
   }
 
   private def setupMetrics = {

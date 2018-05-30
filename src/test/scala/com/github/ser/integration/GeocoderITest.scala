@@ -1,16 +1,16 @@
 package com.github.ser.integration
 
 import com.github.ser._
-import com.github.ser.test.{Google, Randoms}
+import com.github.ser.test.{Google, Randoms, Spark}
 import com.redis.RedisClient
-import org.apache.spark.SparkContext
 import org.scalatest.{FunSuite, Matchers}
 
-class GeocoderITest(sc: SparkContext, redis: RedisClient) extends FunSuite with Matchers with Randoms {
+class GeocoderITest(redis: RedisClient) extends FunSuite with Matchers with Randoms with Spark {
+
   test("should read data from nominatim") {
-    val reader = new Reader(sc)
-    val cleaner = new Cleaner(sc)
-    val geocoder = new Geocoder(sc, "https://nominatim.openstreetmap.org", new EmptyGeoResultCache, new NominatimGeoEngine)
+    val reader = new Reader()
+    val cleaner = new Cleaner()
+    val geocoder = new Geocoder("https://nominatim.openstreetmap.org", new EmptyGeoResultCache, new NominatimGeoEngine)
 
     val users = Seq(
       cleaner.cleanUsers _,
@@ -21,9 +21,9 @@ class GeocoderITest(sc: SparkContext, redis: RedisClient) extends FunSuite with 
   }
 
   test("should read data from google") {
-    val reader = new Reader(sc)
-    val cleaner = new Cleaner(sc)
-    val geocoder = new Geocoder(sc, "https://maps.googleapis.com", new EmptyGeoResultCache, new GoogleGeoEngine(Google.apiKey))
+    val reader = new Reader()
+    val cleaner = new Cleaner()
+    val geocoder = new Geocoder("https://maps.googleapis.com", new EmptyGeoResultCache, new GoogleGeoEngine(Google.apiKey))
 
     val users = Seq(
       cleaner.cleanUsers _,
