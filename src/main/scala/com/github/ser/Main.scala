@@ -11,6 +11,8 @@ import scala.io.Source
 
 object Main extends App with SparkProvider with Resources with LazyLogging {
 
+  val tagLimit = 3000
+
   val usersPath = args(0)
   logger.info(s"users file: $usersPath")
   val postsPath = args(1)
@@ -31,6 +33,8 @@ object Main extends App with SparkProvider with Resources with LazyLogging {
     esSaver.savePostsInEs _
   ).reduce(_ andThen _)(reader.loadPosts(postsPath))
 
+  val tagCounts: Map[String, Long] = tagCounter.countTags(posts, tagLimit)
+
   val usersToUpdate = reader.loadPosts(postsPath)
     .filter(_.postType == Answer)
     .flatMap { post =>
@@ -43,7 +47,8 @@ object Main extends App with SparkProvider with Resources with LazyLogging {
       maybeUserWithTags.map { case (user: User, post: Post) =>
         val otherPostPoints = user.points.filter(_.postId != post.id)
         val addedTags = post.tags.map(tag => Point(post.id, tag, post.score))
-        user.copy(points = otherPostPoints ++ addedTags)
+        val points = (otherPostPoints ++ addedTags).filter(point => tagCounts.contains(point.tag))
+        user.copy(points = points)
       }
     }
 

@@ -20,9 +20,9 @@ trait ElasticResources {
 trait CacheResources {
   this: Resources =>
 
-  val redisPrefix = "nominatim"
+  val redisPrefix = geoEngineMode.geoEngineName.toLowerCase()
   val redis = new RedisClient("localhost", 6379) with Serializable
-  val geoResultCache = new RedisGeoResultCache(redis, geoEngineMode.geoEngineName)
+  val geoResultCache = new RedisGeoResultCache(redis, geoEngineMode.geoEngineName.toLowerCase())
 }
 
 trait SparkResources {
@@ -35,6 +35,7 @@ trait SparkResources {
     case NominatimMode => new Geocoder("https://nominatim.openstreetmap.org", geoResultCache, new TimedGeoEngine(new NominatimGeoEngine))
     case GoogleMode => new Geocoder("https://maps.googleapis.com", geoResultCache, new TimedGeoEngine(new GoogleGeoEngine(apiKey)))
   }
+  val tagCounter = new TagCounter()
 }
 
 sealed trait GeoEngineMode {

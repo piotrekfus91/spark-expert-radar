@@ -5,8 +5,6 @@ import com.github.ser.test.Spark
 import org.scalatest.{FlatSpec, Matchers}
 
 class ReaderTest extends FlatSpec with Matchers with Spark {
-  import spark.implicits._
-
   val sut = new Reader()
 
   it should "read users file to RDD" in {
