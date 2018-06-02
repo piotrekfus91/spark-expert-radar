@@ -1,33 +1,36 @@
 package com.github.ser
 
 import com.github.ser.domain.{Post, PostType, User}
+import com.github.ser.metrics.Metered
 import com.github.ser.util.XmlUtil
 import org.apache.spark.sql.{Dataset, Encoder}
 
 class Reader extends SparkProvider {
   def loadUsers(inputFile: String)(implicit userEncoder: Encoder[User]): Dataset[User] = {
-    loadFile(inputFile).map(toUserCustomParser)
+    Metered.timed("component.reader", "object", "user", "measurement", "total")(() => loadFile(inputFile, "user").map(toUserXmlUtil))
   }
 
   def loadPosts(inputFile: String)(implicit postEncoder: Encoder[Post]): Dataset[Post] = {
-    loadFile(inputFile).map(toPostCustomParser)
+    Metered.timed("component.reader", "object", "post", "measurement", "total")(() => loadFile(inputFile, "post").map(toPostCustomParser))
   }
 
-  private def loadFile(inputFile: String): Dataset[String] = {
+  private def loadFile(inputFile: String, `object`: String): Dataset[String] = {
     import spark.implicits._
-    sqlContext.read.textFile(inputFile).as[String]
-      .filter(_.contains("<row"))
+    Metered.timed("component.reader", "object", `object`, "measurement", "fileLoading")(() => {
+      sqlContext.read.textFile(inputFile).as[String]
+        .filter(_.contains("<row"))
+    })
   }
 
-  val toUserXmlUtil = (line: String) => User(
+  val toUserXmlUtil = (line: String) => Metered.timed("parsing", "object", "user", "parser", "xml")(() => User(
     XmlUtil.requiredAttribute(line, "Id").toLong,
     XmlUtil.requiredAttribute(line, "DisplayName"),
     XmlUtil.optionalAttribute(line, "Location"),
     XmlUtil.requiredAttribute(line, "UpVotes").toLong,
     XmlUtil.requiredAttribute(line, "DownVotes").toLong
-  )
+  ))
 
-  val toUserCustomParser = (line: String) => {
+  val toUserCustomParser = (line: String) => Metered.timed("parsing", "object", "user", "parser", "regex")(() => {
     val allQuotes = "\"".r.findAllMatchIn(line).map(_.start).sliding(2, 2).toList
     val attributeNamesStart = (line.indexOf("<row ") + "<row ".length) :: allQuotes.map(l => l(1) + 2).dropRight(1)
     val attributeNames = attributeNamesStart.zip(allQuotes.map(_.head - 1)).map(p => line.substring(p._1, p._2))
@@ -49,9 +52,9 @@ class Reader extends SparkProvider {
       extractRequiredAttribute("UpVotes").toLong,
       extractRequiredAttribute("DownVotes").toLong
     )
-  }
+  })
 
-  val toPostCustomParser = (line: String) => {
+  val toPostCustomParser = (line: String) => Metered.timed("parsing", "object", "post", "parser", "regex")(() => {
     val allQuotes = "\"".r.findAllMatchIn(line).map(_.start).sliding(2, 2).toList
     val attributeNamesStart = (line.indexOf("<row ") + "<row ".length) :: allQuotes.map(l => l(1) + 2).dropRight(1)
     val attributeNames = attributeNamesStart.zip(allQuotes.map(_.head - 1)).map(p => line.substring(p._1, p._2))
@@ -73,5 +76,5 @@ class Reader extends SparkProvider {
       extractAttribute("OwnerUserId").map(_.toLong),
       extractAttribute("Tags").map(_.split("&gt;").map(_.substring("&lt;".length)).toList).getOrElse(List.empty)
     )
-  }
+  })
 }

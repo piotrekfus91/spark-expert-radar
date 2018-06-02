@@ -1,16 +1,19 @@
 package com.github.ser
 
 import com.github.ser.domain.{Answer, Post, Question, User}
+import com.github.ser.metrics.Metered
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.sql.Dataset
 
 class Cleaner extends LazyLogging {
   def cleanUsers(users: Dataset[User]): Dataset[User] = {
     logger.info("cleaning users")
-    List(
-      removeSpecialUsers,
-      removeWithoutLocation
-    ).reduce(_ andThen _)(users)
+    Metered.timed("component.cleaner", "object", "user")(() => {
+      List(
+        removeSpecialUsers,
+        removeWithoutLocation
+      ).reduce(_ andThen _)(users)
+    })
   }
 
   private val removeSpecialUsers = (users: Dataset[User]) => users.filter(_.id > 0)
@@ -18,9 +21,11 @@ class Cleaner extends LazyLogging {
 
   def cleanPosts(posts: Dataset[Post]): Dataset[Post] = {
     logger.info("cleaning posts")
-    List(
-      removePostsWithUnknownPostType
-    ).reduce(_ andThen _)(posts)
+    Metered.timed("component.cleaner", "object", "post")(() => {
+      List(
+        removePostsWithUnknownPostType
+      ).reduce(_ andThen _)(posts)
+    })
   }
 
   private val removePostsWithUnknownPostType = (posts: Dataset[Post]) => posts.filter(post => List(Question, Answer).contains(post.postType))

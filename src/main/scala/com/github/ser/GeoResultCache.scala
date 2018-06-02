@@ -3,6 +3,7 @@ package com.github.ser
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import com.github.ser.domain.GeoResult
+import com.github.ser.metrics.Metered
 import com.redis.RedisClient
 import com.redis.serialization.Parse.Implicits.parseByteArray
 import com.sksamuel.avro4s.{AvroInputStream, AvroOutputStream}
@@ -29,29 +30,33 @@ class MapBasedGeoResultCache extends GeoResultCache with Serializable {
 
 class RedisGeoResultCache(val redis: RedisClient, val prefix: String) extends GeoResultCache with LazyLogging with Serializable {
   override def save(location: String, geoResults: List[GeoResult]): Unit = {
-    logger.trace(s"saving location $location as $geoResults")
-    val key = buildKey(location)
-    val baos = new ByteArrayOutputStream()
-    val out = AvroOutputStream.json[GeoResult](baos)
-    out.write(geoResults)
-    out.close()
-    redis.set(key, baos)
+    Metered.timed("redis.cache.save")(() => {
+      logger.trace(s"saving location $location as $geoResults")
+      val key = buildKey(location)
+      val baos = new ByteArrayOutputStream()
+      val out = AvroOutputStream.json[GeoResult](baos)
+      out.write(geoResults)
+      out.close()
+      redis.set(key, baos)
+    })
   }
 
   override def get(location: String): Option[List[GeoResult]] = {
-    val key = buildKey(location)
-    val maybeBytes = redis.get[Array[Byte]](key)
-    logger.trace(s"got geolocation from cache for $location: $maybeBytes")
-    val entry = maybeBytes.map { bytes =>
-      val bais = new ByteArrayInputStream(bytes)
-      val in = AvroInputStream.json[GeoResult](bais)
-      in.iterator.toList
-    }
-    entry match {
-      case Some(_) => redis.incr(s"$prefix.cache.hit")
-      case None => redis.incr(s"$prefix.cache.miss")
-    }
-    entry
+    Metered.timed("redis.cache.get")(() => {
+      val key = buildKey(location)
+      val maybeBytes = redis.get[Array[Byte]](key)
+      logger.trace(s"got geolocation from cache for $location: $maybeBytes")
+      val entry = maybeBytes.map { bytes =>
+        val bais = new ByteArrayInputStream(bytes)
+        val in = AvroInputStream.json[GeoResult](bais)
+        in.iterator.toList
+      }
+      entry match {
+        case Some(_) => redis.incr(s"$prefix.cache.hit")
+        case None => redis.incr(s"$prefix.cache.miss")
+      }
+      entry
+    })
   }
 
   private def buildKey(location: String) = {
