@@ -12,6 +12,8 @@
         "downvotes": { "type": "long" },
         "location": { "type": "text" },
         "geolocation": { "type": "geo_point" },
+        "latSpan": { "type": "double" },
+        "lonSpan": { "type": "double" },
         "points": {
           "type": "nested",
           "properties": {
