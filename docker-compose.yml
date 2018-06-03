@@ -8,6 +8,7 @@ services:
     environment:
       - cluster.name=docker-cluster
       - bootstrap.memory_lock=true
+      - node.name=elasticsearch
       - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
     ulimits:
       memlock:
@@ -24,6 +25,7 @@ services:
     environment:
       - cluster.name=docker-cluster
       - bootstrap.memory_lock=true
+      - node.name=elasticsearch2
       - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
       - "discovery.zen.ping.unicast.hosts=elasticsearch"
     ulimits:
@@ -39,6 +41,7 @@ services:
     environment:
       - cluster.name=docker-cluster
       - bootstrap.memory_lock=true
+      - node.name=elasticsearch3
       - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
       - "discovery.zen.ping.unicast.hosts=elasticsearch"
     ulimits:
@@ -80,6 +83,18 @@ services:
       - 8888:8888
     volumes:
       - ./dockerFiles/chronograf:/var/lib/chronograf
+
+  telegraf:
+    image: telegraf:latest
+    volumes:
+      - ./dockerFiles/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    container_name: telegraf
+    links:
+      - influxdb
+    ports:
+      - "8092:8092/udp"
+      - "8094:8094"
+      - "8125:8125/udp"
 
 volumes:
   esdata1:

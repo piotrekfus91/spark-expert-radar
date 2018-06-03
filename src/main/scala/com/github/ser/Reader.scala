@@ -7,7 +7,7 @@ import org.apache.spark.sql.{Dataset, Encoder}
 
 class Reader extends SparkProvider {
   def loadUsers(inputFile: String)(implicit userEncoder: Encoder[User]): Dataset[User] = {
-    Metered.timed("component.reader", "object", "user", "measurement", "total")(() => loadFile(inputFile, "user").map(toUserXmlUtil))
+    Metered.timed("component.reader", "object", "user", "measurement", "total")(() => loadFile(inputFile, "user").map(toUserCustomParser))
   }
 
   def loadPosts(inputFile: String)(implicit postEncoder: Encoder[Post]): Dataset[Post] = {

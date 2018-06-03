@@ -1,4 +1,5 @@
-dockerFiles/
+dockerFiles/redis
+dockerFiles/chronograf
 data/
 thesis/
 tags

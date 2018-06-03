@@ -23,10 +23,10 @@ object Main extends App with SparkProvider with Resources with LazyLogging {
   setupElastic(esClient)
   setupMetrics
 
-//  val users = Seq(
-//    cleaner.cleanUsers _,
-//    esSaver.saveUsersInEs _
-//  ).reduce(_ andThen _)(reader.loadUsers(usersPath))
+  val users = Seq(
+    cleaner.cleanUsers _,
+    esSaver.saveUsersInEs _
+  ).reduce(_ andThen _)(reader.loadUsers(usersPath))
 
   val posts = Seq(
     cleaner.cleanPosts _,
