@@ -23,7 +23,7 @@ object Main extends App with SparkProvider with Resources with LazyLogging {
   setupElastic(esClient)
   setupMetrics
 
-  val users = Seq(
+  Seq(
     cleaner.cleanUsers _,
     esSaver.saveUsersInEs _
   ).reduce(_ andThen _)(reader.loadUsers(usersPath))
@@ -31,11 +31,11 @@ object Main extends App with SparkProvider with Resources with LazyLogging {
   val posts = Seq(
     cleaner.cleanPosts _,
     esSaver.savePostsInEs _
-  ).reduce(_ andThen _)(reader.loadPosts(postsPath))
+  ).reduce(_ andThen _)(reader.loadPosts(postsPath)).cache()
 
   val tagCounts: Map[String, Long] = tagCounter.countTags(posts, tagLimit)
 
-  val usersToUpdate = reader.loadPosts(postsPath)
+  val usersToUpdate = posts
     .filter(_.postType == Answer)
     .flatMap { post =>
       val maybeUserWithTags = for {
