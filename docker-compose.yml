@@ -56,6 +56,8 @@ services:
     container_name: kibana
     ports:
       - 5601:5601
+    volumes:
+      - ./dockerFiles/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
 
   redis:
     container_name: redis
