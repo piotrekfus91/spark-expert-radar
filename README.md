@@ -12,4 +12,4 @@ TBA
 
 ## Screenshot
 
-![preview not available](img/kibana.png)
+![preview not available](assets/kibana.png)
