@@ -9,8 +9,8 @@
 
 - Dane
 - Architektura
-- Problemy
-- Zdjęcia
+- Główny algorytm
+- Problemy i rozwiązania
 
 ---
 
@@ -64,9 +64,9 @@
 ---
 
 @title[Architektura]
-### ArchitekturaAAA
+### Architektura
 
-![Kibana](assets/kibana.png)
+![Architektura](assets/architecture.png)
 
 ---
 
@@ -81,8 +81,6 @@
 
 ### Aktualizacja o punkty (tagi) i lokalizację
 
-Dla każdego postu typu `Odpowiedź`:
-
 0. Wyszukanie w Elasticsearch postu nadrzędnego - pytania
 0. Pobranie listy tagów
 0. Połączenie tagów z punktami przyznanymi za odpowiedź
@@ -95,8 +93,7 @@ Dla każdego postu typu `Odpowiedź`:
 
 @title[Problemy]
 
-## Problemy...
-### i rozwiązania
+## Rozwiązania problemów
 
 +++
 
@@ -127,33 +124,11 @@ Dla każdego postu typu `Odpowiedź`:
 
 ---
 
-@title[Monitoring]
-### Monitoring
-
-- Stos TICK
-- Micrometer
-- Mierzone czasy wykonania zadań, statystyki biznesowe
-- Metryki Spark, JVM, Redis, Elasticsearch
-
----
-
-@title[Zdjęcia]
+@title[Działająca aplikacja]
 
 ### Kibana
 
 ![Kibana](assets/kibana.png)
-
-+++
-
-### Metryki aplikacji
-
-![Aplikacja](assets/app.png)
-
-+++
-
-### Metryki JVM
-
-![JVM](assets/jvm.png)
 
 ---
 
